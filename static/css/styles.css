@@ -1,0 +1,348 @@
+@font-face {
+    font-family: "SF-Pro";
+    src: url("../fonts/SFPRODISPLAYBOLD.OTF");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "SF-Pro";
+    src: url("../fonts/SFPRODISPLAYMEDIUM.OTF");
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "SF-Pro";
+    src: url("../fonts/SFPRODISPLAYREGULAR.OTF");
+    font-weight: 400;
+    font-style: normal;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "SF-Pro", sans-serif;
+}
+
+.wrapper {
+    padding: 5px 20px;
+}
+
+.floating-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #25D366; /* Nimpo green */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+}
+
+.floating-button:hover {
+    background-color: #25D366;
+}
+
+.nimpo-icon {
+    width: 35px;
+    height: 35px;
+}
+
+.custom-window {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    top: 0;
+    right: -100%; /* Hide off-screen initially */
+    width: 450px;
+    height: 100%;
+    background-color: #FBFBFB;
+    border: 1px solid #ECECEC;
+    transition: right 0.3s ease;
+    z-index: 999;
+}
+
+@media only screen and (max-width: 600px) {
+    .custom-window {
+        width: 100%;
+        right: -120%
+    }
+}
+
+.window-header {
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    /* padding: 5px; */
+    margin: 0;
+    padding-left: 35px;
+    height: 75px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #ECECEC;
+}
+
+.header-logo {
+    width: 35px;
+    height: 35px;
+    margin-right: 20px;
+}
+
+/* .status-description {
+    display: flex;
+    align-items: center;
+} */
+
+.header-text {
+    flex: 1;
+    /* margin-left: 10px; */
+}
+
+/* .online-status {
+    height: 5px;
+    width: 5px;
+    background-color: #25D366;
+    border-radius: 5px;
+    margin-right: 4px;
+} */
+
+.header-text h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.description {
+    margin: 0;
+    font-size: 12px;
+    color: #A9A9A9;
+    font-weight: 400;
+    display: inline-flex;
+    /* text-align: center; */
+}
+
+.description::before {
+    content: "";
+    height: 5px;
+    width: 5px;
+    background-color: #25D366;
+    border-radius: 5px;
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+
+#close-button {
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    font-weight: 100;
+    cursor: pointer;
+    color: #DBDBDB;
+}
+
+/* .close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 15px;
+    height: 15px;
+    background: url('img/close-icon.png') no-repeat center center;
+    background-size: contain;
+    border: none;
+    cursor: pointer;
+} */
+
+#close-button:hover {
+    color: #000000;
+}
+
+#window-content {
+    /* padding: 20px; */
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 15px;
+    overflow: scroll;
+}
+
+.message {
+    padding: 10px;
+    padding-bottom: 0px;
+    max-width: 350px;
+    border: 1.5px solid #F4F4F4;
+    border-radius: 10px;
+    margin: 7.5px 0;
+}
+
+.sender-name{
+    color: #111B21;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0;
+    padding: 0 5px 5px 5px;
+}   
+
+.receiver-name{
+    color:#FFFFFF;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0;
+    padding: 0 5px 5px 5px;
+}
+
+.message-text{
+    color: #474747;
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    padding-left: 5px;
+    padding-bottom: 10px;
+    max-width: 98%;
+}
+
+.message.sender{
+    background-color: #FFFFFF;
+    border-bottom-left-radius: 0;
+}
+
+.message.receiver{
+    background-color: #25D366;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+    
+}
+
+.receiver p.message-text{
+    color:#FFFFFF;
+}
+    
+.message-wrapper{
+    display: flex;
+    align-items: baseline;
+}
+
+.date{
+    margin: 0;
+    padding: 5px 0;
+    font-size: 10px;
+    font-weight: 400;
+    color: #CACACA;
+}
+
+.date.receiver{
+    color:#FFFFFF;
+}
+
+.company-name {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.window-footer {
+    /* display: flex;
+    align-items: center;
+    padding: 20px;
+    border-top: 1px solid #ECECEC;
+    background-color: #FFFFFF; */
+    /* margin-top: auto; Pushes the footer to the bottom */
+    /* padding: 20px; */
+    background-color: #FFFFFF;
+    padding-bottom: 10px;
+    height: 80px;
+}
+
+
+.input-area{
+    display: flex;
+    align-items: center;
+    height: 20px;
+    padding: 20px 20px;
+    border-top: 1px solid #ECECEC;
+    /* background-color: #FFFFFF; */
+    margin-top: auto;
+    padding-bottom: 15px;
+}
+
+.footer-line {
+    /* padding: 0, 20px, 0, 20px; */
+    margin-top: 0px;
+    background-color: #ECECEC;
+    height: 1px;
+    border: 0px;
+    width: 100%;
+}
+
+.nimpo-power {
+    height: 10px;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    /* padding-right: 25px; */
+    /* margin-right: 25px; */
+}
+
+.nimpo-power p {
+    font-size: 10px;
+    font-weight: 400;
+    color: #737373;
+    margin: 0;
+    padding-right: 3px;
+    padding-bottom: 2px;
+}
+
+.nimpo-power a {
+    height: 15px;
+    padding-bottom: 3px;
+}
+
+.attach-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.attach-button img {
+    width: 24px;
+    height: 24px;
+}
+
+#message-input {
+    color: #000000;
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    
+    min-height: 40px;
+    max-height: 150px;
+    resize: none;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#message-input::placeholder {
+    color:#A9A9A9;
+    opacity: 1;
+}
+
+#send-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+#send-button img {
+    width: 30px;
+    height: 30px;
+}
