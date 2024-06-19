@@ -21,13 +21,14 @@ def get_chat_config():
     user_code = request.args.get('user_code')
 
     chat = db.getChatByCode(user_code)
+    user = db.getUserByCode(user_code)
     if chat:
         return jsonify({
             'id': chat.get('_id', "Default Chat Id"),
             'chatName': chat.get('chat_name', 'Default Chat Name'),
             'description': chat.get('description', 'Default Description'),
             'greeting': chat.get('greeting', 'Default Greeting'),
-            'subscriptionStatus': 'active'  # Replace with actual subscription check
+            'plan': 'Trial'  # Replace with actual subscription check
         })
     
     return jsonify({'error': 'Chat config not found'}), 404

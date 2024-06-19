@@ -3,9 +3,16 @@ from telebot import types
 from shared import send_message_to_client, connected_clients
 from db import DB
 import markups as nav
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+TG_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 db = DB()
-bot = telebot.TeleBot('1443244805:AAHmStbxNHKWgC--pC-IR-DHO6FDs9loMhw')
+bot = telebot.TeleBot(TG_TOKEN)
+operator_messages = {}
+
 
 @bot.callback_query_handler(func=lambda callback: True)
 def handle_callback_query(callback):
@@ -14,10 +21,11 @@ def handle_callback_query(callback):
     if len(callback_data) > 2:
         action = callback_data[1]
         payload = callback_data[2]
+        chatId = callback_data[3] if len(callback_data)> 3 else None
 
         if action == "reply":
             msg = bot.send_message(callback.message.chat.id, "Your message:")
-            bot.register_next_step_handler(msg, lambda message: process_reply(message, payload))
+            bot.register_next_step_handler(msg, lambda message: process_reply(chatId, message, payload))
         elif action == "info":
             bot.send_message(message.chat.id, f"#{connected_clients[payload]}:\n")
         elif action == "setup":
@@ -31,9 +39,12 @@ def handle_callback_query(callback):
         elif action == "code":
             get_widget_code(message)
         elif action == 'operator':
-            manage_operator(message, payload)
+            manage_operator(chatId, message, payload)
         elif action == 'remove':
             remove_operator(message, payload)
+        elif action == 'edit':
+            msg = bot.send_message(callback.message.chat.id, 'Enter new name:')
+            bot.register_next_step_handler(msg, lambda message: process_edit_operator_name(message, payload))
         elif action == "menu":
             mainMenu(message)
         elif action == "back":
@@ -44,12 +55,16 @@ def handle_callback_query(callback):
             else:
                 mainMenu(message)
 
-def process_reply(message, client_id):
-    result = send_message_to_client(client_id, {'text': message.text, 'sender': message.from_user.first_name})
+def process_reply(chatId, message, client_id):
+    operator_name = db.getOperatorNameById(int(chatId), str(message.chat.id))
+    result = send_message_to_client(client_id, {'text': message.text, 'sender': operator_name})
     if result:
         bot.send_message(message.chat.id, 'Message mas sent')
     else:
         bot.send_message(message.chat.id, 'Client not connected')
+
+def process_edit_operator_name(message, operator_id):
+    edit_operator_name(message, operator_id, message.text)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -66,8 +81,9 @@ def start(message):
 def setup(message):
     chat_id = message.chat.id
     username = message.chat.username
-    db.addAdmin(chat_id, username)
-    db.addOperatorToChat(chat_id, username, chat_id)
+    name = message.from_user.first_name
+    db.addAdmin(chat_id, username, name)
+    db.addOperatorToChat(chat_id, username, chat_id, name)
 
     msg = bot.send_message(chat_id, "Enter the chat name:")
     bot.register_next_step_handler(msg, process_chat_name_step)
@@ -103,22 +119,25 @@ def add_operator(message):
 def joinChatAsOperator(message, toJoin):
     chatId = message.chat.id
     username = message.chat.username
+    name = message.from_user.first_name
 
-    db.addOperatorToChat(int(toJoin), username, chatId)
+    db.addOperatorToChat(int(toJoin), username, chatId, name)
     bot.send_message(chatId, "You successfully joined as an operator.\nNow all incoming messages will directed to you.", reply_markup=nav.createKeyboardMenu())
     bot.send_message(toJoin, f'Operator @{username} successfully joined as an operator.', reply_markup=nav.createKeyboardMenu())
 
 def get_all_operators(message):
     chat_id = message.chat.id
     chat_config = db.getChatConfig(chat_id)
-    operators = chat_config['operators'].keys()
+    operators = chat_config['operators']
 
     result = 'Choose an operator:'
-    return bot.send_message(chat_id, result, reply_markup=nav.createOperatorsMarkup(operators))
+    return bot.send_message(chat_id, result, reply_markup=nav.createOperatorsMarkup(chat_id, operators))
 
-def manage_operator(message, operator):
-    text = f"Operator:\n@{operator}"
-    bot.send_message(message.chat.id, text, reply_markup=nav.createManageOperatorMarkup(operator))
+def manage_operator(chatId, message, operatorId):
+    chat = db.getChatConfig(int(chatId))
+    operator = chat['operators'][operatorId]
+    text = f"Operator:\n{operator['operator_name']} (@{operator['operator_username']})"
+    bot.send_message(message.chat.id, text, reply_markup=nav.createManageOperatorMarkup(chatId, operatorId))
 
 def remove_operator(message, operator):
     result = db.removeOperator(message.chat.id, operator)
@@ -126,6 +145,13 @@ def remove_operator(message, operator):
         bot.send_message(message.chat.id, f'Operator @{operator}, successfully removed', reply_markup=nav.createKeyboardMenu())
     else:
         bot.send_message(message.chat.id, f'Server error when removing operator @{operator}', reply_markup=nav.createKeyboardMenu())
+
+def edit_operator_name(message, operator_id, newName):
+    result = db.updateOperatorNameById(message.chat.id, operator_id, newName)
+    if result:
+        bot.send_message(message.chat.id, f'Operator renamed successfully', reply_markup=nav.createKeyboardMenu())
+    else:
+        bot.send_message(message.chat.id, f'Server error when editing operator {newName}', reply_markup=nav.createKeyboardMenu())
 
 def get_widget_code(message):
     chat_id = message.chat.id
@@ -163,12 +189,18 @@ def mainMenu(message):
     chat_id = message.chat.id
     chat = db.chatsCollection.find_one({"_id": chat_id})
     if chat:
-        text = [f"{chat['chat_name']}\n",
-        f"{chat['description']}\n",
-        f"First message: {chat['greeting']}",
+        chatName = chat['chat_name']
+        chatDescription = chat['description']
+        chatGreeting = chat['greeting']
+        chatAdminUsername = chat['admin']['username']
+        chatAdminName = chat['admin']['name']
+
+        text = [f"{chatName}\n",
+        f"{chatDescription}\n",
+        f"First message: {chatGreeting}\n",
         "Status: Online\n\n",
-        f"You: @{chat['admin_username']}\n",
-        f"Role: Admin{", Operator" if chat['admin_username'] in chat['operators'] else ""}"]
+        f"You: {chatAdminName} (@{chatAdminUsername})\n",
+        f"Role: Admin{", Operator" if str(chat_id) in chat['operators'] else ""}"]
         text = ''.join(text)
         
         bot.send_message(chat_id, text, reply_markup=nav.mainMenuMarkup)
@@ -179,11 +211,11 @@ def send_message_to_operators(chat_id, message, sender_id, chat_name):
     mock_name = connected_clients[sender_id]
     markup = types.InlineKeyboardMarkup(row_width=2)
     info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")
-    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}")
+    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}__{chat_id}")
     markup.add(reply)
     
     chat_config = db.getChatConfig(chat_id)
-    operators = chat_config['operators'].values()
+    operators = chat_config['operators'].keys()
     if chat_config:
         for operator_chat_id in operators:
             msg = bot.send_message(operator_chat_id, f'#{mock_name} from - {chat_name}\n\n{message}', reply_markup=markup)
@@ -194,7 +226,7 @@ def send_file_to_telegram(chat_id, file, sender_id, chat_name):
     mock_name = connected_clients[sender_id]
     markup = types.InlineKeyboardMarkup(row_width=2)
     info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")
-    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}")
+    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}__{chat_id}")
     markup.add(reply)
     
     chat_config = db.getChatConfig(int(chat_id))

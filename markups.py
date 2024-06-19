@@ -14,10 +14,10 @@ def createKeyboardMenu():
     keyboardMenu = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True).add(menuBtn, helpBtn)
     return keyboardMenu
 
-def createOperatorsMarkup(operators):
+def createOperatorsMarkup(chatId, operators):
     operatorsMarkup = types.InlineKeyboardMarkup(row_width=1)
-    for operator in operators:
-        operatorTmp = types.InlineKeyboardButton(f'@{operator}', callback_data=f"__operator__{operator}")
+    for operatorId in operators.keys():
+        operatorTmp = types.InlineKeyboardButton(f'{operators[operatorId]["operator_name"]} (@{operators[operatorId]["operator_username"]})', callback_data=f"__operator__{operatorId}__{chatId}")
         operatorsMarkup.add(operatorTmp)
     
     addOperatorBtn = types.InlineKeyboardButton("Add operator", callback_data="__add__")
@@ -26,12 +26,13 @@ def createOperatorsMarkup(operators):
 
     return operatorsMarkup
 
-def createManageOperatorMarkup(operator):
+def createManageOperatorMarkup(chatId, operator_id):
     mngOperatorMarkup = types.InlineKeyboardMarkup(row_width=1)
 
-    delOperator = types.InlineKeyboardButton("Remove", callback_data=f"__remove__{operator}")
+    delOperator = types.InlineKeyboardButton("Remove", callback_data=f"__remove__{operator_id}")
+    editName = types.InlineKeyboardButton("Edit", callback_data=f"__edit__{operator_id}")
     backBtn = types.InlineKeyboardButton("Back", callback_data="__back__operators__")
 
-    mngOperatorMarkup.add(delOperator, backBtn)
+    mngOperatorMarkup.add(delOperator, editName, backBtn)
 
     return mngOperatorMarkup
