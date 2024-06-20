@@ -1,8 +1,7 @@
-from flask import Flask, render_template, url_for, request, redirect, jsonify, send_from_directory
-from flask_socketio import SocketIO, emit, join_room, leave_room, send, join_room, leave_room
+from flask import Flask, request, redirect, jsonify, send_from_directory
+from flask_socketio import emit
 from db import DB
 from flask_cors import CORS
-import json
 from bot import send_message_to_operators, send_file_to_telegram
 from shared import socketio, register_client, unregister_client
 import os
@@ -60,11 +59,7 @@ def after_request(response):
 
 @app.route('/')
 def render():
-    return render_template('index.html')  
-
-@app.route('/demo.html')
-def demo():
-    return render_template('demo.html')  
+    return '<h1>Hello World!</h1>'
 
 @app.route('/img/<path:filename>')
 def img(filename):
@@ -74,26 +69,13 @@ def img(filename):
 def fonts(filename):
     return send_from_directory('static/fonts', filename)
 
-# @app.route("/client.js")
-# def client_js():
-#     return render_template('client.js')
-
 @app.route('/js/<path:filename>')
 def script(filename):
     return send_from_directory('static/js', filename)
 
-# @app.route("/script.js")
-# def script():
-#     return render_template('script.js')
-
 @app.route('/styles/<path:filename>')
 def css(filename):
     return send_from_directory('static/css', filename)
-
-# @app.route("/styles.css")
-# def css():
-#     return render_template('styles.css')
-
 
 @socketio.on('connect')
 def handle_connect():
@@ -131,16 +113,9 @@ def handle_message(data):
         message = data['text']
         send_message_to_operators(chat_id, message, sender_id, chat_name)
 
-    # Simulate the bot's reply
-    # response_message = f"Reply to {sender_id}: {message}, I dont give a fuck"
-    # In a real implementation, you would use requests to send this message to the bot and get a response
-
-    # Send the response back to the client
-    # emit('message', {'text': response_message, 'sender': 'operator'}, room=sender_id)
-
 
 def start_flask_server():
-    socketio.run(app, debug=True, use_reloader=False, port=3000)
+    socketio.run(app, host='0.0.0.0', port=8080, debug=True, use_reloader=False)
 
 if __name__ == '__main__':
     start_flask_server()
