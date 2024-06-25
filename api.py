@@ -91,7 +91,7 @@ def send_message_to_client(client_id):
     data = request.json
     message = data.get('message')
     if client_id in connected_clients:
-        emit('message', message, room=client_id)
+        socketio.emit('message', message, room=client_id)
         print(f"Message sent to client {connected_clients[client_id]} ({client_id}): {message}")
         return jsonify({'status': 'message_sent'}), 200
     else:
