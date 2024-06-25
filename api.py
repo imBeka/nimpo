@@ -113,9 +113,8 @@ def handle_message(data):
         message = data['text']
         send_message_to_operators(chat_id, message, sender_id, chat_name)
 
-
-def start_flask_server():
-    socketio.run(app, host='0.0.0.0', port=8080, debug=True, use_reloader=False)
+# def start_flask_server():
+#     socketio.run(app, host='0.0.0.0', port=8000, debug=True, use_reloader=False)
 
 if __name__ == '__main__':
-    start_flask_server()
+    app.run() 
