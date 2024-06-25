@@ -1,9 +1,9 @@
 from flask import Flask, request, redirect, jsonify, send_from_directory
-from flask_socketio import emit
+from flask_socketio import emit, SocketIO
 from db import DB
 from flask_cors import CORS
 # from bot import send_message_to_operators, send_file_to_telegram
-from shared import socketio, register_client, unregister_client
+from shared import register_client, unregister_client
 import os
 import tempfile
 import requests
@@ -16,13 +16,12 @@ BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 # Define the base URL for the Telegram Bot API
 BASE_URL = f'https://api.telegram.org/bot{BOT_TOKEN}/'
 
-
+socketio = SocketIO()
 db = DB()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 cors = CORS(app)
 socketio.init_app(app, cors_allowed_origins="*")
-
 
 def send_message_to_operators(chat_id, message, sender_id, chat_name):
     mock_name = connected_clients[sender_id]
