@@ -2,10 +2,18 @@ from flask import Flask, request, redirect, jsonify, send_from_directory
 from flask_socketio import emit
 from db import DB
 from flask_cors import CORS
-from bot import send_message_to_operators, send_file_to_telegram
-from shared import socketio, register_client, unregister_client
+# from bot import send_message_to_operators, send_file_to_telegram
+from shared import socketio, register_client, unregister_client, connected_clients
 import os
 import tempfile
+import requests
+import json
+
+# Define your bot token here
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+# Define the base URL for the Telegram Bot API
+BASE_URL = f'https://api.telegram.org/bot{BOT_TOKEN}/'
 
 
 db = DB()
@@ -13,6 +21,46 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 cors = CORS(app)
 socketio.init_app(app, cors_allowed_origins="*")
+
+
+def send_message_to_operators(chat_id, message, sender_id, chat_name):
+    mock_name = connected_clients[sender_id]
+
+    # Create inline keyboard markup with buttons
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "reply", "callback_data": f"__reply__{sender_id}__{chat_id}"}
+            ]
+        ]
+    }
+
+    # Convert reply_markup to JSON
+    reply_markup_json = json.dumps(reply_markup)
+
+    chat_config = db.getChatConfig(chat_id)
+    
+    if chat_config:
+        operators = chat_config['operators'].keys()
+        for operator_chat_id in operators:
+            # Prepare the data for the message
+            data = {
+                'chat_id': operator_chat_id,
+                'text': f'#{mock_name} from - {chat_name}\n\n{message}',
+                'reply_markup': reply_markup_json
+            }
+
+            # Send the message via the Telegram Bot API
+            response = requests.post(BASE_URL + 'sendMessage', data=data)
+
+            # Check for any errors
+            if response.status_code != 200:
+                print(f"Failed to send message to operator {operator_chat_id}: {response.text}")
+            else:
+                print(f"Message sent to operator {operator_chat_id}")
+    else:
+        print(f"Chat configuration not found for chat_id: {chat_id}")
+
 
 # API server for client.js
 @app.route('/get_chat_config', methods=['GET'])
