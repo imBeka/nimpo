@@ -1,6 +1,6 @@
 var chatInput = document.getElementById('message-input');
 var sendBtn = document.getElementById("send-button")
-const HOST = "http://13.53.193.208:8000";
+const HOST = "https://nimpo-deploy-5933d9b45d32.herokuapp.com";
 let socket = io.connect(HOST)
 
 chatConfig = JSON.parse(localStorage.getItem("chatConfig"))

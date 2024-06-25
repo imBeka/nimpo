@@ -1,6 +1,6 @@
 (function() {
     var newDiv = document.createElement('div');
-    const HOST = "http://13.53.193.208:8000";
+    const HOST = "https://nimpo-deploy-5933d9b45d32.herokuapp.com";
     newDiv.id = 'chat-widget';
     document.body.appendChild(newDiv);
 
