@@ -1,6 +1,7 @@
+import requests
 import telebot
 from telebot import types
-from shared import send_message_to_client, connected_clients
+from shared import send_message_to_client
 from db import DB
 import markups as nav
 from dotenv import load_dotenv
@@ -12,7 +13,14 @@ TG_TOKEN = os.getenv("TELEGRAM_TOKEN")
 db = DB()
 bot = telebot.TeleBot(TG_TOKEN)
 operator_messages = {}
+connected_clients = {}
 
+
+def update_connected_clients():
+    global connected_clients
+    API_URL = 'https://nimpo-deploy-5933d9b45d32.herokuapp.com'
+    response = requests.get(f"{API_URL}/clients")
+    connected_clients = response.json()
 
 @bot.callback_query_handler(func=lambda callback: True)
 def handle_callback_query(callback):
@@ -22,7 +30,8 @@ def handle_callback_query(callback):
         action = callback_data[1]
         payload = callback_data[2]
         chatId = callback_data[3] if len(callback_data)> 3 else None
-
+        update_connected_clients()
+        
         if action == "reply":
             msg = bot.send_message(callback.message.chat.id, "Your message:")
             bot.register_next_step_handler(msg, lambda message: process_reply(chatId, message, payload))
@@ -208,6 +217,7 @@ def mainMenu(message):
         print("Chat not found")
 
 def send_message_to_operators(chat_id, message, sender_id, chat_name):
+    update_connected_clients()
     mock_name = connected_clients[sender_id]
     markup = types.InlineKeyboardMarkup(row_width=2)
     info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")
@@ -223,6 +233,7 @@ def send_message_to_operators(chat_id, message, sender_id, chat_name):
         print(f"Chat configuration not found for chat_id: {chat_id}")
 
 def send_file_to_telegram(chat_id, file, sender_id, chat_name):
+    update_connected_clients()
     mock_name = connected_clients[sender_id]
     markup = types.InlineKeyboardMarkup(row_width=2)
     info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")

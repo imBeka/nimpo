@@ -1,47 +1,31 @@
-from flask_socketio import SocketIO
-import hashlib
+import requests
 
-# Create a global SocketIO instance
-socketio = SocketIO()
+API_URL = 'https://nimpo-deploy-5933d9b45d32.herokuapp.com'  # Change this to your actual API URL
 
-# Dictionary to keep track of connected clients
-connected_clients = {}
-
-# Function to register a new client
 def register_client(client_id):
-    mock_name = generate_funny_name(client_id)
-    connected_clients[client_id] = mock_name
-    print(f"Client {client_id} registered as {mock_name}")
-
-# Function to unregister a client
-def unregister_client(client_id):
-    if client_id in connected_clients:
-        del connected_clients[client_id]
-        print(f"Client {client_id} unregistered")
-
-# Function to send a message to a specific client
-def send_message_to_client(client_id, message):
-    if client_id in connected_clients:
-        socketio.emit('message', message, room=client_id)
-        print(f"Message sent to client {connected_clients[client_id]} ({client_id}): {message}")
-        return True
+    response = requests.post(f'{API_URL}/clients/{client_id}')
+    if response.status_code == 201:
+        print(response.json())
+    elif response.status_code == 200:
+        print(f"Client {client_id} is already registered.")
     else:
-        print(f"Client {client_id} not connected")
-        return False
+        print(f"Failed to register client {client_id}")
 
-def generate_funny_name(input_string):
-    # Calculate a consistent hash value for the input string
-    hash_value = hashlib.md5(input_string.encode()).hexdigest()
+def unregister_client(client_id):
+    response = requests.delete(f'{API_URL}/clients/{client_id}')
+    if response.status_code == 200:
+        print(f"Client {client_id} unregistered successfully.")
+    elif response.status_code == 404:
+        print(f"Client {client_id} not found.")
+    else:
+        print(f"Failed to unregister client {client_id}")
 
-    # Define a list of adjectives and nouns for generating funny names
-    adjectives = ['massive', 'colorful', 'happy', 'cheerful', 'silly', 'jolly', 'playful', 'quirky', 'whimsical', 'zany']
-    nouns = ['unicorn', 'penguin', 'cormorant', 'giraffe', 'platypus', 'narwhal', 'koala', 'sloth', 'octopus', 'toucan']
-
-    # Use the hash value to select an adjective and noun from the lists
-    adjective_index = int(hash_value, 16) % len(adjectives)
-    noun_index = int(hash_value, 16) % len(nouns)
-
-    # Construct the funny name using the selected adjective and noun
-    funny_name = adjectives[adjective_index] + '_' + nouns[noun_index]
-
-    return funny_name
+def send_message_to_client(client_id, message):
+    data = {'message': message}
+    response = requests.post(f'{API_URL}/clients/{client_id}/message', json=data)
+    if response.status_code == 200:
+        print(f"Message sent to client {client_id}: {message}")
+    elif response.status_code == 404:
+        print(f"Client {client_id} not connected.")
+    else:
+        print(f"Failed to send message to client {client_id}")

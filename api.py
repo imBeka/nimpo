@@ -3,11 +3,12 @@ from flask_socketio import emit
 from db import DB
 from flask_cors import CORS
 # from bot import send_message_to_operators, send_file_to_telegram
-from shared import socketio, register_client, unregister_client, connected_clients
+from shared import socketio, register_client, unregister_client
 import os
 import tempfile
 import requests
 import json
+import hashlib
 
 # Define your bot token here
 BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -60,6 +61,43 @@ def send_message_to_operators(chat_id, message, sender_id, chat_name):
                 print(f"Message sent to operator {operator_chat_id}")
     else:
         print(f"Chat configuration not found for chat_id: {chat_id}")
+
+connected_clients = {}
+
+@app.route('/clients', methods=['GET'])
+def get_connected_clients():
+    return jsonify(connected_clients)
+
+@app.route('/clients/<client_id>', methods=['POST'])
+def register_client(client_id):
+    if client_id not in connected_clients:
+        mock_name = generate_funny_name(client_id)
+        connected_clients[client_id] = mock_name
+        print(f"Client {client_id} registered as {mock_name}")
+        return jsonify({'status': 'registered', 'name': mock_name}), 201
+    else:
+        return jsonify({'status': 'already_registered'}), 200
+
+@app.route('/clients/<client_id>', methods=['DELETE'])
+def unregister_client(client_id):
+    if client_id in connected_clients:
+        del connected_clients[client_id]
+        print(f"Client {client_id} unregistered")
+        return jsonify({'status': 'unregistered'}), 200
+    else:
+        return jsonify({'status': 'not_found'}), 404
+
+@app.route('/clients/<client_id>/message', methods=['POST'])
+def send_message_to_client(client_id):
+    data = request.json
+    message = data.get('message')
+    if client_id in connected_clients:
+        emit('message', message, room=client_id)
+        print(f"Message sent to client {connected_clients[client_id]} ({client_id}): {message}")
+        return jsonify({'status': 'message_sent'}), 200
+    else:
+        print(f"Client {client_id} not connected")
+        return jsonify({'status': 'client_not_connected'}), 404
 
 
 # API server for client.js
@@ -160,6 +198,24 @@ def handle_message(data):
     else:
         message = data['text']
         send_message_to_operators(chat_id, message, sender_id, chat_name)
+
+
+def generate_funny_name(input_string):
+    # Calculate a consistent hash value for the input string
+    hash_value = hashlib.md5(input_string.encode()).hexdigest()
+
+    # Define a list of adjectives and nouns for generating funny names
+    adjectives = ['massive', 'colorful', 'happy', 'cheerful', 'silly', 'jolly', 'playful', 'quirky', 'whimsical', 'zany']
+    nouns = ['unicorn', 'penguin', 'cormorant', 'giraffe', 'platypus', 'narwhal', 'koala', 'sloth', 'octopus', 'toucan']
+
+    # Use the hash value to select an adjective and noun from the lists
+    adjective_index = int(hash_value, 16) % len(adjectives)
+    noun_index = int(hash_value, 16) % len(nouns)
+
+    # Construct the funny name using the selected adjective and noun
+    funny_name = adjectives[adjective_index] + '_' + nouns[noun_index]
+
+    return funny_name
 
 def start_flask_server():
     socketio.run(app, host='0.0.0.0', port=8000, debug=True, use_reloader=False)
