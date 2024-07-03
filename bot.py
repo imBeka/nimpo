@@ -9,6 +9,7 @@ import os
 
 load_dotenv()
 TG_TOKEN = os.getenv("TELEGRAM_TOKEN")
+HOST = os.getenv("HOST")
 
 db = DB()
 bot = telebot.TeleBot(TG_TOKEN)
@@ -18,7 +19,7 @@ connected_clients = {}
 
 def update_connected_clients():
     global connected_clients
-    API_URL = 'https://nimpo-deploy-5933d9b45d32.herokuapp.com'
+    API_URL = f'{HOST}'
     response = requests.get(f"{API_URL}/clients")
     connected_clients = response.json()
 
@@ -173,7 +174,7 @@ def get_widget_code(message):
         var userCode = '{unique_code}';
         (function() {{
             var script = document.createElement('script');
-            script.src = "http://localhost:3000/js/client.js";
+            script.src = "{HOST}/js/client.js";
             document.head.appendChild(script);
         }})();
         </script>

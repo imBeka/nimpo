@@ -1,22 +1,21 @@
 (function() {
+    const HOST = "http://127.0.0.1:3000";
     var newDiv = document.createElement('div');
-    const HOST = "https://nimpo-deploy-5933d9b45d32.herokuapp.com";
     newDiv.id = 'chat-widget';
     document.body.appendChild(newDiv);
 
     var chatConfig = {};
-
     var userCode = window.userCode;  // This should be passed from the HTML where the script is included
 
-
-    function openWindow() {
-        document.getElementById('custom-window').style.right = '0';
-        document.getElementById('floating-button').style.display = 'none';
+    function openWindow(shadow) {
+        shadow.getElementById('custom-window').style.right = '0';
+        shadow.getElementById('floating-button').style.display = 'none';
+        shadow.getElementById('notifier').style.display = 'none';
     }
     
-    function closeWindow() {
-        document.getElementById('custom-window').style.right = '-450px';
-        document.getElementById('floating-button').style.display = 'flex';
+    function closeWindow(shadow) {
+        shadow.getElementById('custom-window').style.right = '-450px';
+        shadow.getElementById('floating-button').style.display = 'flex';
     }
     
     function handleFileUpload(event) {
@@ -48,10 +47,11 @@
         return formattedDateTime;
     }
 
-    function loadScript(url) {
+    function loadScript(url, callback) {
         var script = document.createElement('script');
         script.src = url;
         script.async = true;
+        script.onload = callback;
         document.head.appendChild(script);
     }
 
@@ -64,64 +64,74 @@
                 console.log(`Subscription status: ${config.subscriptionStatus}`);
                 chatConfig = config;
                 localStorage.setItem("chatConfig", JSON.stringify(config));
+                
+                // Create shadow root
                 var widgetFrame = document.getElementById('chat-widget');
-                widgetFrame.innerHTML = `
+                var shadow = widgetFrame.attachShadow({ mode: 'open' });
+
+                shadow.innerHTML = `
                     <title>Nimpo Widget</title>
                     <link rel="stylesheet" type="text/css" href="${HOST}/styles/styles.css"> 
                     
-                        <div id="floating-button" class="floating-button">
-                            <img src="${HOST}/img/nimpo-icon.svg" alt="Call Icon" class="nimpo-icon">
+                    <div id="floating-button" class="floating-button">
+                        <img src="${HOST}/img/nimpo-icon.svg" alt="Call Icon" class="nimpo-icon">
+                        <div id="notifier" class="notifier" style="display: none;"></div>
+                    </div>
+                    <div id="custom-window" class="custom-window">
+                        <div class="window-header wrapper">
+                            <img src="${HOST}/img/company-logo.svg" alt="Logo" class="header-logo">
+                            <div class="header-text">
+                                <h2 class="company-name">${chatConfig.chatName}</h2>
+                                <p class="description">${chatConfig.description}</p>
+                            </div>
+                            <button id="close-button">&#10005;</button> <!-- X icon -->
                         </div>
-                        <div id="custom-window" class="custom-window">
-                            <div class="window-header wrapper">
-                                <img src="${HOST}/img/company-logo.svg" alt="Logo" class="header-logo">
-                                <div class="header-text">
-                                    <h2 class="company-name">${chatConfig.chatName}</h2>
-                                    <p class="description">${chatConfig.description}</p>
-                                </div>
-                                <button id="close-button">&#10005;</button> <!-- X icon -->
-                            </div>
-                    
-                            <div class="wrapper" id="window-content">
-                                <div class="message sender">
-                                    <div class="message-wrapper">
-                                        <p class="sender-name">Sender</p>
-                                        <p class="date sender">${getCurrentDateTime()}</p>
-                                    </div>
-                                    <p class="message-text">${chatConfig.greeting}</p>
-                                </div>
-                            </div>
-                    
-                            <div class="window-footer">
-                                <div class="input-area wrapper">
-                                    <button class="attach-button" onclick="document.getElementById('file-input').click()">
-                                        <img src="${HOST}/img/attach-icon.svg" alt="Attach Icon">
-                                    </button>
-                                    <input type="file" id="file-input" accept="image/*" style="display: none;">
-                                    <input type="text" id="message-input" placeholder="Введите свое сообщение...">
-                                    <button id="send-button"><img src="${HOST}/img/send-button.svg" alt="Send Icon"></button>
-                                </div>
-                                <hr class="footer-line">
-                                <div class="nimpo-power wrapper">
-                                    <p>powered by</p>
-                                    <a href="http://nimpo.uz/" class="nimpo-link">
-                                        <img src="${HOST}/img/nimpo-logo-text.svg" alt="Nimpo Logo">
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-    
                 
+                        <div class="wrapper" id="window-content">
+                            <div class="message sender">
+                                <div class="message-wrapper">
+                                    <p class="sender-name">Sender</p>
+                                    <p class="date sender">${getCurrentDateTime()}</p>
+                                </div>
+                                <p class="message-text">${chatConfig.greeting}</p>
+                            </div>
+                        </div>
+                
+                        <div class="window-footer">
+                            <div class="input-area wrapper">
+                                <button class="attach-button" onclick="document.getElementById('file-input').click()">
+                                    <img src="${HOST}/img/attach-icon.svg" alt="Attach Icon">
+                                </button>
+                                <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                <input type="text" id="message-input" placeholder="Введите свое сообщение...">
+                                <button id="send-button"><img src="${HOST}/img/send-button.svg" alt="Send Icon"></button>
+                            </div>
+                            <hr class="footer-line">
+                            <div class="nimpo-power wrapper">
+                                <p>powered by</p>
+                                <a href="http://nimpo.uz/" class="nimpo-link">
+                                    <img src="${HOST}/img/nimpo-logo-text.svg" alt="Nimpo Logo">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 `;
-                document.getElementById("floating-button").addEventListener('click', (e)=>openWindow())
-                document.getElementById("close-button").addEventListener('click', (e)=>closeWindow())
-                document.getElementById("file-input").addEventListener('change', (e)=>handleFileUpload(e))
-                loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js")
-                loadScript(`${HOST}/js/script.js`)
+
+                // Attach event listeners inside the shadow DOM
+                shadow.getElementById("floating-button").addEventListener('click', () => openWindow(shadow));
+                shadow.getElementById("close-button").addEventListener('click', () => closeWindow(shadow));
+                shadow.getElementById("file-input").addEventListener('change', handleFileUpload);
+
+                // Load the scripts after the DOM is ready
+                loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js", () => {
+                    loadScript(`${HOST}/js/script.js`, () => {
+                        // Ensure that script.js can access elements inside the shadow DOM
+                        if (typeof window.initChatWidget === 'function') {
+                            window.initChatWidget(shadow);
+                        }
+                    });
+                });
             }
         })
         .catch(error => console.error('Error fetching chat config:', error));
-            
-    
-
 })();

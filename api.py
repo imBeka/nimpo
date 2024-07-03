@@ -14,7 +14,7 @@ import hashlib
 BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 # Define the base URL for the Telegram Bot API
-BASE_URL = f'https://api.telegram.org/bot{BOT_TOKEN}/'
+BASE_URL = f'https://api.telegram.org/bot{BOT_TOKEN}'
 
 socketio = SocketIO()
 db = DB()
@@ -51,11 +51,11 @@ def send_message_to_operators(chat_id, message, sender_id, chat_name):
             }
 
             # Send the message via the Telegram Bot API
-            response = requests.post(BASE_URL + 'sendMessage', data=data)
+            response = requests.post(BASE_URL + '/sendMessage', data=data)
 
             # Check for any errors
             if response.status_code != 200:
-                print(f"Failed to send message to operator {operator_chat_id}: {response.text}")
+                print(f"Failed to send message to operator {operator_chat_id}: {response}")
             else:
                 print(f"Message sent to operator {operator_chat_id}")
     else:
@@ -162,6 +162,10 @@ def script(filename):
 def css(filename):
     return send_from_directory('static/css', filename)
 
+@app.route('/sounds/<path:filename>')
+def sound(filename):
+    return send_from_directory('static/sounds', filename)
+
 @socketio.on('connect')
 def handle_connect():
     client_address = request.remote_addr
@@ -217,8 +221,7 @@ def generate_funny_name(input_string):
     return funny_name
 
 def start_flask_server():
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True, use_reloader=False)
-    app.run()
+    socketio.run(app, port=3000, debug=True, use_reloader=False)
 
 if __name__ == '__main__':
-    app.run() 
+    start_flask_server()

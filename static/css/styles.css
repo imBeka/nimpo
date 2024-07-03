@@ -19,7 +19,7 @@
     font-style: normal;
 }
 
-body {
+#custom-window {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -117,6 +117,7 @@ body {
 .header-text h2 {
     margin: 0;
     font-size: 1.2em;
+    height: 20px;
 }
 
 .description {
@@ -345,4 +346,16 @@ body {
 #send-button img {
     width: 30px;
     height: 30px;
+}
+
+.notifier {
+    content: "";
+    height: 15px;
+    width: 15px;
+    background-color: #ff4233;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    right: 0;
+
 }
