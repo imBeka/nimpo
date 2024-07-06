@@ -178,7 +178,7 @@ class DB:
 
     def getChatConfig(self, chat_id):
         try:
-            chat_config = self.chatsCollection.find_one({"_id": chat_id})
+            chat_config = self.chatsCollection.find_one({"_id": int(chat_id)})
             return chat_config
         except Exception as e:
             print("Error getting chat config:", e)

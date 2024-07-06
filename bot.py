@@ -15,6 +15,7 @@ db = DB()
 bot = telebot.TeleBot(TG_TOKEN)
 operator_messages = {}
 connected_clients = {}
+replied_messages = {}
 
 
 def update_connected_clients():
@@ -54,7 +55,7 @@ def handle_callback_query(callback):
             remove_operator(message, payload)
         elif action == 'edit':
             msg = bot.send_message(callback.message.chat.id, 'Enter new name:')
-            bot.register_next_step_handler(msg, lambda message: process_edit_operator_name(message, payload))
+            bot.register_next_step_handler(msg, lambda message: edit_operator_name(message, payload, message.text))
         elif action == "menu":
             mainMenu(message)
         elif action == "back":
@@ -68,13 +69,11 @@ def handle_callback_query(callback):
 def process_reply(chatId, message, client_id):
     operator_name = db.getOperatorNameById(int(chatId), str(message.chat.id))
     result = send_message_to_client(client_id, {'text': message.text, 'sender': operator_name})
+    
     if result:
-        bot.send_message(message.chat.id, 'Message mas sent')
+        notify_operators_message_replied(chatId, client_id, operator_name)
     else:
         bot.send_message(message.chat.id, 'Client not connected')
-
-def process_edit_operator_name(message, operator_id):
-    edit_operator_name(message, operator_id, message.text)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -217,37 +216,15 @@ def mainMenu(message):
     else:
         print("Chat not found")
 
-def send_message_to_operators(chat_id, message, sender_id, chat_name):
-    update_connected_clients()
+def notify_operators_message_replied(chat_id, sender_id, operator_name):
     mock_name = connected_clients[sender_id]
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")
-    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}__{chat_id}")
-    markup.add(reply)
-    
-    chat_config = db.getChatConfig(chat_id)
-    operators = chat_config['operators'].keys()
-    if chat_config:
-        for operator_chat_id in operators:
-            msg = bot.send_message(operator_chat_id, f'#{mock_name} from - {chat_name}\n\n{message}', reply_markup=markup)
-    else:
-        print(f"Chat configuration not found for chat_id: {chat_id}")
-
-def send_file_to_telegram(chat_id, file, sender_id, chat_name):
-    update_connected_clients()
-    mock_name = connected_clients[sender_id]
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    info = types.InlineKeyboardButton("info", callback_data=f"__info__{sender_id}")
-    reply = types.InlineKeyboardButton("reply", callback_data=f"__reply__{sender_id}__{chat_id}")
-    markup.add(reply)
-    
     chat_config = db.getChatConfig(int(chat_id))
-    operators = chat_config['operators'].values()
-    caption = f'#{mock_name} from - {chat_name}'
+    
     if chat_config:
+        operators = chat_config['operators'].keys()
         for operator_chat_id in operators:
-            # msg = bot.send_message(operator_chat_id, f'#{mock_name} from - {chat_name}\n\n{message}', reply_markup=markup)
-            bot.send_photo(chat_id, file, caption, reply_markup=markup)
+            
+            bot.send_message(operator_chat_id, f'Message from #{mock_name} has been replied to by {operator_name}.\nNo further action needed.')
     else:
         print(f"Chat configuration not found for chat_id: {chat_id}")
 

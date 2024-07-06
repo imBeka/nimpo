@@ -2,7 +2,6 @@ from flask import Flask, request, redirect, jsonify, send_from_directory
 from flask_socketio import emit, SocketIO
 from db import DB
 from flask_cors import CORS
-# from bot import send_message_to_operators, send_file_to_telegram
 from shared import register_client, unregister_client
 import os
 import tempfile
