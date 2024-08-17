@@ -209,7 +209,7 @@ def mainMenu(message):
         f"First message: {chatGreeting}\n",
         "Status: Online\n\n",
         f"You: {chatAdminName} (@{chatAdminUsername})\n",
-        f"Role: Admin{', Operator' if str(chat_id) in chat['operators'] else ""}"]
+        f"Role: Admin{', Operator' if str(chat_id) in chat['operators'] else ''}"]
         text = ''.join(text)
         
         bot.send_message(chat_id, text, reply_markup=nav.mainMenuMarkup)
