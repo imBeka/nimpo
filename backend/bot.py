@@ -224,7 +224,7 @@ def notify_operators_message_replied(chat_id, sender_id, operator_name):
         operators = chat_config['operators'].keys()
         for operator_chat_id in operators:
             
-            bot.send_message(operator_chat_id, f'Message from #{mock_name} has been replied to by {operator_name}.\nNo further action needed.')
+            bot.send_message(operator_chat_id, f'Message from #{mock_name} has been replied to by {operator_name}.')
     else:
         print(f"Chat configuration not found for chat_id: {chat_id}")
 

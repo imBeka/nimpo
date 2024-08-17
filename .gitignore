@@ -1,8 +1,1 @@
-.vscode
-__pycache__
-demo
-gpt
-.env
-templates
-test.py
-.DS_Store
+demo/

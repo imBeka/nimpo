@@ -4,6 +4,23 @@ function initChatWidget(shadow) {
     const HOST = "http://127.0.0.1:3000";
     let socket = io.connect(HOST)
 
+    // WebSocket event listeners for better debugging
+    socket.on('connect', () => {
+        console.log('WebSocket connected');
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('WebSocket disconnected:', reason);
+    });
+
+    socket.on('reconnect_attempt', () => {
+        console.log('WebSocket reconnect attempt');
+    });
+
+    socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+
     // Sound notification setup
     const messageSound = new Audio(`${HOST}/sounds/pop.mp3`);
     messageSound.volume = 0.5; // Adjust the volume if needed
@@ -42,9 +59,10 @@ function initChatWidget(shadow) {
             }
     })
 
-    shadow.getElementById("file-input").addEventListener('change', (e)=>uploadFile(e))
+    shadow.getElementById("file-input").addEventListener('change', (e) => uploadFile(e));
 
     function uploadFile(e) {
+        e.preventDefault();
         let file = e.target.files[0];
 
         if (!file) {
@@ -60,17 +78,30 @@ function initChatWidget(shadow) {
 
         reader.onload = function (e) {
             rawData = e.target.result;
+            console.log('File loaded:', file.name, file.type);
             socket.emit("message", {
                 type: 'attachment',
                 data: rawData,
-                chatId: chatConfig.id, 
+                chatId: chatConfig.id,
                 chatName: chatConfig.chatName,
                 filename: file.name,
                 mimetype: file.type
             });
+            console.log("Message sent with file:", file.name);
         };
+
+        reader.onerror = function (e) {
+            console.error('Error reading file:', e);
+        };
+
         reader.readAsArrayBuffer(file);
-        displayUploadedPhoto(URL.createObjectURL(file), file.name)
+        
+        if (file.type.startsWith('image/')) {
+            displayUploadedPhoto(URL.createObjectURL(file), file.name);
+        } else {
+            // displayUploadedFile(file.name, file.type);
+            console.log('x3')
+        }
     }
 
 

@@ -60,6 +60,38 @@ def send_message_to_operators(chat_id, message, sender_id, chat_name):
     else:
         print(f"Chat configuration not found for chat_id: {chat_id}")
 
+def send_file_to_telegram(chat_id, file_path, sender_id, chat_name):
+    mock_name = connected_clients[sender_id]
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "reply", "callback_data": f"__reply__{sender_id}__{chat_id}"}
+            ]
+        ]
+    }
+
+    reply_markup_json = json.dumps(reply_markup)
+    chat_config = db.getChatConfig(chat_id)
+
+    if chat_config:
+        operators = chat_config['operators'].keys()
+        for operator_chat_id in operators:
+            # Prepare the data for the file message
+            files = {'photo': open(file_path, 'rb')}
+            data = {
+                'chat_id': operator_chat_id,
+                'caption': f'#{mock_name} from - {chat_name}',
+                'reply_markup': reply_markup_json
+            }
+
+            response = requests.post(BASE_URL + '/sendPhoto', files=files, data=data)
+            if response.status_code != 200:
+                print(f"Failed to send file to operator {operator_chat_id}: {response.text}")
+            else:
+                print(f"File sent to operator {operator_chat_id}")
+    else:
+        print(f"Chat configuration not found for chat_id: {chat_id}")
+
 connected_clients = {}
 
 @app.route('/clients', methods=['GET'])
@@ -116,23 +148,23 @@ def get_chat_config():
     
     return jsonify({'error': 'Chat config not found'}), 404
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    sender_id = 0
-    chat_id = request.form['chat_id']
-    chat_name = request.form['chat_name']
-    file = request.files['file']
+# @app.route('/upload', methods=['POST'])
+# def upload_file():
+#     sender_id = 0
+#     chat_id = request.form['chat_id']
+#     chat_name = request.form['chat_name']
+#     file = request.files['file']
 
-    if 'file' not in request.files:
-        return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
-        return redirect(request.url)
-    if file and file.content_type.startswith('image/'):
-        send_file_to_telegram(chat_id, file, sender_id, chat_name)
-        return 'Image successfully uploaded and sent to Telegram.'
-    else:
-        return 'Invalid file type. Please upload an image.'
+#     if 'file' not in request.files:
+#         return redirect(request.url)
+#     file = request.files['file']
+#     if file.filename == '':
+#         return redirect(request.url)
+#     if file and file.content_type.startswith('image/'):
+#         send_file_to_telegram(chat_id, file, sender_id, chat_name)
+#         return 'Image successfully uploaded and sent to Telegram.'
+#     else:
+#         return 'Invalid file type. Please upload an image.'
 
 @app.after_request
 def after_request(response):
@@ -144,6 +176,10 @@ def after_request(response):
 @app.route('/')
 def render():
     return '<h1>Hello World!</h1>'
+
+@app.route('/<path:filename>')
+def home(filename):
+    return send_from_directory('demo', filename)
 
 @app.route('/img/<path:filename>')
 def img(filename):
@@ -184,22 +220,29 @@ def handle_message(data):
     sender_id = request.sid
     chat_id = data['chatId']
     chat_name = data['chatName']
+    print(f"Received message from {sender_id}")
 
     if data['type'] == 'attachment':
-        # Save the received file
-        temp_dir = tempfile.gettempdir()
-        file_path = os.path.join(temp_dir, data['filename'])
-        with open(file_path, 'wb') as f:
-            f.write(data['data'])
+        try:
+            # Save the received file
+            temp_dir = tempfile.gettempdir()
+            file_path = os.path.join(temp_dir, data['filename'])
+            print(f"Saving file to {file_path}")
+            with open(file_path, 'wb') as f:
+                f.write(data['data'])
 
-        # Send the file to the Telegram bot
-        with open(file_path, 'rb') as f:
-            send_file_to_telegram(chat_id, f, sender_id, chat_name)
-        os.remove(file_path)
-
+            # Send the file to the Telegram bot
+            send_file_to_telegram(chat_id, file_path, sender_id, chat_name)
+            os.remove(file_path)
+            print(f"File {data['filename']} processed and removed")
+        except Exception as e:
+            print(f"Error handling attachment: {e}")
     else:
-        message = data['text']
-        send_message_to_operators(chat_id, message, sender_id, chat_name)
+        try:
+            message = data['text']
+            send_message_to_operators(chat_id, message, sender_id, chat_name)
+        except Exception as e:
+            print(f"Error handling message: {e}")
 
 
 def generate_funny_name(input_string):

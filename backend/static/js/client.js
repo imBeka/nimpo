@@ -99,7 +99,7 @@
                 
                         <div class="window-footer">
                             <div class="input-area wrapper">
-                                <button class="attach-button" onclick="document.getElementById('file-input').click()">
+                                <button class="attach-button" id="attach-btn">
                                     <img src="${HOST}/img/attach-icon.svg" alt="Attach Icon">
                                 </button>
                                 <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -118,6 +118,7 @@
                 `;
 
                 // Attach event listeners inside the shadow DOM
+                shadow.getElementById("attach-btn").addEventListener('click', () => shadow.getElementById('file-input').click())
                 shadow.getElementById("floating-button").addEventListener('click', () => openWindow(shadow));
                 shadow.getElementById("close-button").addEventListener('click', () => closeWindow(shadow));
                 shadow.getElementById("file-input").addEventListener('change', handleFileUpload);
