@@ -1,7 +1,7 @@
 function initChatWidget(shadow) {
     var chatInput = shadow.getElementById('message-input');
     var sendBtn = shadow.getElementById("send-button")
-    const HOST = "http://127.0.0.1:3000";
+    const HOST = "http://5.101.7.211";
     let socket = io.connect(HOST)
 
     // WebSocket event listeners for better debugging

@@ -1,5 +1,5 @@
 (function() {
-    const HOST = "http://127.0.0.1:3000";
+    const HOST = "http://5.101.7.211";
     var newDiv = document.createElement('div');
     newDiv.id = 'chat-widget';
     document.body.appendChild(newDiv);
