@@ -10,7 +10,7 @@ import json
 import hashlib
 
 # Define your bot token here
-BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+BOT_TOKEN = "1443244805:AAHmStbxNHKWgC--pC-IR-DHO6FDs9loMhw"
 
 # Define the base URL for the Telegram Bot API
 BASE_URL = f'https://api.telegram.org/bot{BOT_TOKEN}'
@@ -263,7 +263,7 @@ def generate_funny_name(input_string):
     return funny_name
 
 def start_flask_server():
-    socketio.run(app, port=3000, debug=True, use_reloader=False)
+    socketio.run(app, debug=True, use_reloader=False)
 
 if __name__ == '__main__':
     start_flask_server()
